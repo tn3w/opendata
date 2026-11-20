@@ -1,4 +1,4 @@
-# Public recursive resolvers used by `opendata scan`, one per line:
+# Public recursive resolvers used by `rdns scan`, one per line:
 #   scheme://[tls-host@]address [connections]
 # udp = port 53, tcp = pipelined port 53 (RFC 7766), tls = DNS over TLS port 853.
 # Only services that are offered to the public. Every connection must answer two
