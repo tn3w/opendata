@@ -11,7 +11,7 @@ members = ["rdns"]
 
 [dependencies]
 axum = "0.8"
-iscrawl = { version = "1.2.1", features = ["database"] }
+iscrawl = { version = "2.0.1", features = ["database"] }
 listenfd = "1"
 rdns = { path = "rdns" }
 serde = { version = "1", features = ["derive"] }
