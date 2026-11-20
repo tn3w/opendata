@@ -1,0 +1,14 @@
+# /etc/systemd/system/opendata-api.socket
+[Unit]
+Description=Socket for reverse DNS lookups (Caddy reverse_proxy target)
+
+[Socket]
+ListenStream=/run/opendata/api.sock
+SocketUser=opendata
+SocketGroup=caddy
+SocketMode=0660
+DirectoryMode=0755
+Backlog=4096
+
+[Install]
+WantedBy=sockets.target

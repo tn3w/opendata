@@ -1,0 +1,11 @@
+# /etc/systemd/system/opendata-publish.timer
+[Unit]
+Description=Upload changed datasets to GitHub every hour
+
+[Timer]
+OnBootSec=10min
+OnUnitActiveSec=1h
+RandomizedDelaySec=5min
+
+[Install]
+WantedBy=timers.target

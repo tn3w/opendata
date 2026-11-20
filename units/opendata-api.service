@@ -1,0 +1,16 @@
+# /etc/systemd/system/opendata-api.service
+[Unit]
+Description=Reverse DNS lookups (data.tn3w.dev/rdns/lookup/<ip>)
+Requires=opendata-api.socket
+After=opendata-api.socket
+ConditionPathExists=/opt/opendata/bin/opendata
+
+[Service]
+ExecStart=/opt/opendata/bin/opendata api
+Type=exec
+MemoryMax=1G
+PrivateNetwork=yes
+RestrictAddressFamilies=AF_UNIX
+
+[Install]
+WantedBy=multi-user.target

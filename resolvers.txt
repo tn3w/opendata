@@ -1,0 +1,271 @@
+# Public recursive resolvers used by `opendata scan`, one per line:
+#   scheme://[tls-host@]address [connections]
+# udp = port 53, tcp = pipelined port 53 (RFC 7766), tls = DNS over TLS port 853.
+# Only services that are offered to the public. Every connection must answer two
+# canary questions correctly before it gets work, so dead entries are harmless.
+# Removed after an audit against the majority answer (2026-11-14): DNS.SB and Gcore
+# answer "no records" for addresses that have PTR records.
+
+# Cloudflare
+udp://1.1.1.1 2
+udp://1.0.0.1 2
+tcp://1.1.1.1 2
+tcp://1.0.0.1 2
+tls://1.1.1.1 2
+tls://1.0.0.1 2
+udp://1.1.1.2
+udp://1.0.0.2
+udp://1.1.1.3
+udp://1.0.0.3
+tls://1.1.1.2
+tls://1.0.0.3
+
+# Google
+udp://8.8.8.8 2
+udp://8.8.4.4 2
+tcp://8.8.8.8
+tcp://8.8.4.4
+tls://8.8.8.8 2
+tls://8.8.4.4 2
+
+# Quad9
+udp://9.9.9.9 2
+udp://149.112.112.112 2
+udp://9.9.9.10
+udp://149.112.112.10
+udp://9.9.9.11
+udp://149.112.112.11
+udp://9.9.9.12
+tcp://9.9.9.9
+tcp://149.112.112.112
+tls://9.9.9.9 2
+tls://149.112.112.112 2
+tls://9.9.9.10
+tls://149.112.112.10
+
+# OpenDNS (Cisco)
+udp://208.67.222.222 2
+udp://208.67.220.220 2
+udp://208.67.222.123
+udp://208.67.220.123
+udp://208.67.222.2
+udp://208.67.220.2
+tcp://208.67.222.222
+tcp://208.67.220.220
+
+# AdGuard
+udp://94.140.14.14
+udp://94.140.15.15
+udp://94.140.14.140 2
+udp://94.140.14.141 2
+udp://94.140.14.15
+udp://94.140.15.16
+tcp://94.140.14.140
+tls://unfiltered.adguard-dns.com@94.140.14.140 2
+tls://unfiltered.adguard-dns.com@94.140.14.141
+tls://dns.adguard-dns.com@94.140.14.14
+
+# DNS4EU
+udp://86.54.11.100 2
+udp://86.54.11.200 2
+udp://86.54.11.1
+udp://86.54.11.201
+udp://86.54.11.12
+udp://86.54.11.212
+udp://86.54.11.13
+udp://86.54.11.213
+tcp://86.54.11.100
+tls://unfiltered.joindns4.eu@86.54.11.100
+tls://unfiltered.joindns4.eu@86.54.11.200
+
+# Control D
+udp://76.76.2.0 2
+udp://76.76.10.0 2
+udp://76.76.2.1
+udp://76.76.10.1
+udp://76.76.2.2
+udp://76.76.10.2
+tcp://76.76.2.0
+tls://p0.freedns.controld.com@76.76.2.0
+tls://p0.freedns.controld.com@76.76.10.0
+
+# Mullvad (encrypted only)
+tls://dns.mullvad.net@194.242.2.2 2
+tls://adblock.dns.mullvad.net@194.242.2.3
+tls://base.dns.mullvad.net@194.242.2.4
+
+# NextDNS
+udp://45.90.28.0
+udp://45.90.30.0
+tls://dns.nextdns.io@45.90.28.0
+tls://dns.nextdns.io@45.90.30.0
+
+# CleanBrowsing
+udp://185.228.168.9
+udp://185.228.169.9
+udp://185.228.168.168
+udp://185.228.169.168
+udp://185.228.168.10
+udp://185.228.169.11
+tls://security-filter-dns.cleanbrowsing.org@185.228.168.9
+
+# CIRA Canadian Shield
+udp://149.112.121.10
+udp://149.112.122.10
+udp://149.112.121.20
+udp://149.112.122.20
+udp://149.112.121.30
+udp://149.112.122.30
+tls://private.canadianshield.cira.ca@149.112.121.10
+
+# Yandex
+udp://77.88.8.8 2
+udp://77.88.8.1 2
+udp://77.88.8.88
+udp://77.88.8.2
+udp://77.88.8.7
+udp://77.88.8.3
+tcp://77.88.8.8
+tls://common.dot.dns.yandex.net@77.88.8.8
+tls://common.dot.dns.yandex.net@77.88.8.1
+
+# Lumen (Level 3)
+udp://4.2.2.1
+udp://4.2.2.2
+udp://4.2.2.3
+udp://4.2.2.4
+udp://4.2.2.5
+udp://4.2.2.6
+
+# Vercara / Verisign / Neustar UltraDNS Public
+udp://64.6.64.6
+udp://64.6.65.6
+udp://156.154.70.1
+udp://156.154.71.1
+udp://156.154.70.2
+udp://156.154.71.2
+udp://156.154.70.5
+udp://156.154.71.5
+
+# Comodo Secure DNS
+udp://8.26.56.26
+udp://8.20.247.20
+
+# Hurricane Electric
+udp://74.82.42.42
+tcp://74.82.42.42
+tls://ordns.he.net@74.82.42.42
+
+# NTT
+udp://129.250.35.250
+udp://129.250.35.251
+
+# DNS.WATCH
+udp://84.200.69.80
+udp://84.200.70.40
+
+# UncensoredDNS
+udp://91.239.100.100
+udp://89.233.43.71
+tls://anycast.uncensoreddns.org@91.239.100.100
+tls://unicast.uncensoreddns.org@89.233.43.71
+
+# Freifunk München
+udp://5.1.66.255
+udp://185.150.99.255
+tls://dot.ffmuc.net@5.1.66.255
+tls://dot.ffmuc.net@185.150.99.255
+
+# Digitale Gesellschaft, Digitalcourage, dnsforge, dismail, Applied Privacy (encrypted)
+tls://dns.digitale-gesellschaft.ch@185.95.218.42
+tls://dns.digitale-gesellschaft.ch@185.95.218.43
+tls://dns3.digitalcourage.de@5.9.164.112
+udp://176.9.93.198
+udp://176.9.1.117
+tls://dnsforge.de@176.9.93.198
+tls://dnsforge.de@176.9.1.117
+tls://fdns1.dismail.de@116.203.32.217
+tls://fdns2.dismail.de@159.69.114.157
+tls://dot1.applied-privacy.net@146.255.56.98
+
+# SWITCH, CZ.NIC, Restena, Wikimedia, LibreDNS, Njalla, Sinodun, getdns
+udp://130.59.31.248
+udp://130.59.31.251
+tls://dns.switch.ch@130.59.31.248
+tls://dns.switch.ch@130.59.31.251
+udp://193.17.47.1
+udp://185.43.135.1
+tls://odvr.nic.cz@193.17.47.1
+tls://odvr.nic.cz@185.43.135.1
+tls://kaitain.restena.lu@158.64.1.29
+tls://wikimedia-dns.org@185.71.138.138
+tls://dot.libredns.gr@116.202.176.26
+udp://95.215.19.53
+tls://dns.njal.la@95.215.19.53
+tls://dnsovertls.sinodun.com@145.100.185.15
+tls://dnsovertls1.sinodun.com@145.100.185.16
+tls://getdnsapi.net@185.49.141.37
+
+# Surfshark, SafeDNS, Alternate DNS, Comss, puntCAT, BlahDNS
+udp://194.169.169.169
+udp://195.46.39.39
+udp://195.46.39.40
+udp://76.76.19.19
+udp://76.223.122.150
+udp://83.220.169.155
+udp://212.109.195.93
+udp://109.69.8.51
+tls://dot-de.blahdns.com@78.46.244.143
+
+# MSK-IX, SkyDNS
+udp://62.76.76.62
+udp://62.76.62.76
+udp://193.58.251.251
+
+# IIJ (encrypted only)
+tls://public.dns.iij.jp@103.2.57.5
+tls://public.dns.iij.jp@103.2.57.6
+
+# Quad101 (TWNIC), HiNet
+udp://101.101.101.101
+udp://101.102.103.104
+tls://101.101.101.101
+udp://168.95.1.1
+udp://168.95.192.1
+
+# KT, SK Broadband, LG U+
+udp://168.126.63.1
+udp://168.126.63.2
+udp://219.250.36.130
+udp://210.220.163.82
+udp://164.124.101.2
+udp://203.248.252.2
+
+# AliDNS, DNSPod, 114DNS, Baidu, CNNIC, ByteDance, 360
+udp://223.5.5.5
+udp://223.6.6.6
+tls://dns.alidns.com@223.5.5.5
+tls://dns.alidns.com@223.6.6.6
+udp://119.29.29.29
+udp://119.28.28.28
+tls://dot.pub@1.12.12.12
+tls://dot.pub@120.53.53.53
+udp://114.114.114.114
+udp://114.114.115.115
+udp://180.76.76.76
+udp://1.2.4.8
+udp://210.2.4.8
+udp://180.184.1.1
+udp://180.184.2.2
+udp://101.226.4.6
+udp://218.30.118.6
+
+# GigaDNS, Shecan, Dyn, Freenom
+udp://189.38.95.95
+udp://189.38.95.96
+udp://178.22.122.100
+udp://185.51.200.2
+udp://216.146.35.35
+udp://216.146.36.36
+udp://80.80.80.80
+udp://80.80.81.81

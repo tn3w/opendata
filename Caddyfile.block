@@ -1,0 +1,37 @@
+# Reference copy of the opendata parts of /etc/caddy/Caddyfile (edit there by hand).
+
+# Access log for the abuse and crawler lists: JSON lines to opendata-watch over a unix
+# socket, never to disk. Import it only in the site blocks whose visitors should feed
+# the lists. soft_start: Caddy starts even if the socket is missing.
+(access_feed) {
+	log {
+		output net unix//run/opendata/watch.sock {
+			soft_start
+		}
+		format json
+	}
+}
+
+# data.tn3w.dev: open datasets (source opendata/). Files are written by the opendata
+# units into /srv/www/data.tn3w.dev/{rdns,abuse,crawlers}; lookups go to opendata-api.
+https://data.tn3w.dev {
+	import cloudflare_origin
+	import access_feed
+	header {
+		-Server
+		Access-Control-Allow-Origin *
+		X-Content-Type-Options nosniff
+		?Cache-Control "public, max-age=300"
+	}
+	header /rdns/v4/*.zst Cache-Control "public, max-age=86400"
+	header /rdns/v4/all.tsv.xz Cache-Control "public, max-age=86400"
+	header /rdns/stats.json Cache-Control "public, max-age=60"
+
+	handle /rdns/lookup/* {
+		reverse_proxy unix//run/opendata/api.sock
+	}
+	handle {
+		root * /srv/www/data.tn3w.dev
+		file_server
+	}
+}

@@ -1,0 +1,30 @@
+# /etc/systemd/system/opendata-beacon.service
+# Requests a page through Cloudflare over IPv6 and IPv4 with a secret User-Agent.
+# opendata-watch learns the home's public addresses from it, keeps them off the lists
+# and publishes only after the IPv4 request (sent last). No beacon, no publishing.
+[Unit]
+Description=Tell opendata-watch the home's own public addresses
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sh -c 'for family in -6 -4; do curl $$family -s -o /dev/null -m 10 -A "$$(cat "$$CREDENTIALS_DIRECTORY/beacon")" "https://data.tn3w.dev/rdns/stats.json?$$(date +%%s%%N)"; done; true'
+LoadCredential=beacon:/etc/opendata/beacon
+DynamicUser=yes
+LogLevelMax=notice
+CapabilityBoundingSet=
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_INET AF_INET6
+RestrictNamespaces=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+SystemCallArchitectures=native
+SystemCallFilter=@system-service

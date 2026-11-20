@@ -1,0 +1,22 @@
+# /etc/systemd/system/opendata-watch.service
+# Reads Caddy's access log from the socket and keeps it in memory only. Written to disk:
+# attackers (abuse/) and non-browser clients (crawlers/). Publishes only right after an
+# opendata-beacon request, whose source addresses are the home's own and never listed.
+[Unit]
+Description=Abuse and crawler IP lists from Caddy's access log (data.tn3w.dev)
+Requires=opendata-watch.socket
+After=opendata-watch.socket
+ConditionPathExists=/opt/opendata/bin/opendata
+
+[Service]
+ExecStart=/opt/opendata/bin/opendata watch
+LoadCredential=beacon:/etc/opendata/beacon
+LoadCredential=rules:/etc/opendata/rules.json
+Type=exec
+ReadWritePaths=/srv/www/data.tn3w.dev/abuse /srv/www/data.tn3w.dev/crawlers
+MemoryMax=1G
+PrivateNetwork=yes
+RestrictAddressFamilies=AF_UNIX
+
+[Install]
+WantedBy=multi-user.target

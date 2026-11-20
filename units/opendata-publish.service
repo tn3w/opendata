@@ -1,0 +1,28 @@
+# /etc/systemd/system/opendata-publish.service
+[Unit]
+Description=Upload changed datasets to github.com/tn3w/opendata releases
+After=network-online.target
+Wants=network-online.target
+ConditionPathExists=/opt/opendata/bin/opendata-publish
+
+[Service]
+Type=oneshot
+ExecStart=/opt/opendata/bin/opendata-publish
+LoadCredential=github:/etc/opendata/github-token
+DynamicUser=yes
+StateDirectory=opendata-publish
+Nice=15
+CapabilityBoundingSet=
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictNamespaces=yes
+LockPersonality=yes
+SystemCallArchitectures=native
+SystemCallFilter=@system-service

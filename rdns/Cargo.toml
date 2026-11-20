@@ -1,0 +1,18 @@
+[package]
+name = "rdns"
+version = "0.1.0"
+edition = "2024"
+description = "Reverse DNS gatherer for the IPv4 address space"
+license = "MIT"
+publish = false
+
+[dependencies]
+async-channel = "2"
+futures-util = "0.3"
+libc = "0.2"
+liblzma = { version = "0.4", features = ["parallel"] }
+serde_json = "1"
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "net", "time", "sync", "io-util"] }
+tokio-rustls = { version = "0.26", default-features = false, features = ["ring", "tls12", "early-data"] }
+webpki-roots = "1"
+zstd = "0.13"

@@ -1,0 +1,22 @@
+# /etc/systemd/system/opendata-scan.service
+[Unit]
+Description=Reverse DNS gatherer (data.tn3w.dev/rdns)
+After=network-online.target time-sync.target
+Wants=network-online.target time-sync.target
+ConditionPathExists=/opt/opendata/bin/rdns
+
+[Service]
+ExecStart=/opt/opendata/bin/rdns scan /srv/www/data.tn3w.dev/rdns
+Type=exec
+# Upper bound in queries per second over all resolvers (about 0.7 Mbit/s up per 1000).
+# Below it, the per-connection congestion windows decide what the resolvers take.
+Environment=RDNS_RATE=20000
+Environment=RDNS_RESOLVERS=/etc/opendata/resolvers.txt
+StateDirectory=opendata
+ReadWritePaths=/srv/www/data.tn3w.dev/rdns
+MemoryMax=4G
+LimitNOFILE=65536
+RestrictAddressFamilies=AF_INET AF_INET6
+
+[Install]
+WantedBy=multi-user.target

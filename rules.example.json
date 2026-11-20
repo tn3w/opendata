@@ -1,0 +1,25 @@
+{
+  "paths": {
+    "secrets": [
+      "/.env",
+      "/.git"
+    ],
+    "wordpress": [
+      "/wp-"
+    ],
+    "php": [
+      ".php"
+    ]
+  },
+  "queries": {
+    "injection": [
+      "union select"
+    ]
+  },
+  "scanners": [
+    "zgrab"
+  ],
+  "methods": [
+    "TRACE"
+  ]
+}

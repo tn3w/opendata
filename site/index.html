@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Open network data · tn3w.dev</title>
+<meta name="description" content="Free datasets: reverse DNS for IPv4, an abuse IP list and a crawler IP list.">
+<style>
+:root { color-scheme: light dark; }
+body { max-width: 46rem; margin: 2rem auto; padding: 0 1rem; font: 1rem/1.6 system-ui, sans-serif; }
+code, pre { font-family: ui-monospace, monospace; font-size: .9em; }
+pre { overflow-x: auto; padding: .75rem; border: 1px solid #8884; border-radius: .4rem; }
+h2 { margin-top: 2.5rem; }
+</style>
+</head>
+<body>
+<h1>Open network data</h1>
+<p>Three datasets, built on one home server and free to use for any purpose under
+<a href="#license">CC0 1.0</a>, without registration or keys. Every file allows cross-origin requests. Run by
+<a href="https://www.tn3w.dev/">tn3w</a>. Source code and full downloads:
+<a href="https://github.com/tn3w/opendata">github.com/tn3w/opendata</a>.</p>
+
+<h2>Reverse DNS for IPv4</h2>
+<p>The PTR records of the IPv4 address space, so a hostname can be found for an address
+without asking a DNS server. A full pass takes several days and starts again every 30
+days. <a href="/rdns/stats.json"><code>/rdns/stats.json</code></a> shows how far the
+current pass is; until the first pass ends, addresses not yet reached return no names.</p>
+<pre>GET /rdns/lookup/8.8.8.8          {"ip":"8.8.8.8","ptr":["dns.google"]}
+GET /rdns/v4/8/8.tsv.zst          one /16 (here 8.8.0.0/16)
+GET /rdns/v4/files.txt            every /16 file that exists, in address order
+GET /rdns/v4/all.tsv.xz           the whole database of the last finished pass</pre>
+<p>The whole database is one xz file, written when a pass ends and about half the size of
+all /16 files together. The same file is mirrored on GitHub, which is faster:</p>
+<pre>curl -sfL https://github.com/tn3w/opendata/releases/download/data/rdns-v4.tsv.xz \
+  | xz -d > rdns-v4.tsv</pre>
+<p>The /16 files are zstd-compressed text with one line per record:
+<code>address&lt;TAB&gt;hostname</code>, sorted by address, hostnames in lower case without
+the trailing dot. Bytes outside printable ASCII are written as <code>\DDD</code>. An
+address with several PTR records has several lines. A missing file means the range has
+no records.</p>
+<p>How it is gathered: the scanner walks <code>in-addr.arpa</code> from the top. A name
+that does not exist (NXDOMAIN) for a /8, /16 or /24 rules out everything below it with one
+question, so most of the address space is never asked about one address at a time.
+Questions go to public resolvers over UDP, pipelined TCP and DNS over TLS, with a
+congestion window per connection so that no resolver is asked faster than it answers.</p>
+
+<h2>Abuse IP list</h2>
+<p>Addresses that attacked this server's websites: requests for paths only attack tools
+ask for (such as <code>/.env</code>, <code>/wp-login.php</code> or
+<code>/.git/config</code>, none of which exist here), injection attempts in the query
+string, known scanner tools and unusual request methods.</p>
+<pre>GET /abuse/ips.txt                one address per line
+GET /abuse/ips.json               {"203.0.113.6":{"first_seen":…,"last_seen":…,
+                                   "requests":3,"categories":["php","wordpress"]}}</pre>
+<p>Categories: <code>secrets</code>, <code>wordpress</code>, <code>php</code>,
+<code>admin</code>, <code>exploit</code>, <code>traversal</code>,
+<code>injection</code>, <code>scanner</code>, <code>method</code>.</p>
+
+<h2>Crawler IP list</h2>
+<p>Addresses of every client whose User-Agent is not a browser's, as classified by
+<a href="https://github.com/tn3w/iscrawl">iscrawl</a>, listed from the first request.
+This covers search engines and AI crawlers as well as command-line tools, libraries and
+link previews. It is a list of automated clients, not of bad ones.</p>
+<pre>GET /crawlers/ips.txt             one address per line
+GET /crawlers/ips.json            {"203.0.113.7":{"first_seen":…,"last_seen":…,
+                                   "requests":42,"robots_txt":true,
+                                   "user_agents":["…"],"tags":["search-engine"],
+                                   "ptr":["…"],"verified":true}}</pre>
+<p><code>tags</code> come from <a href="https://github.com/tn3w/Crawlerdex">Crawlerdex</a>.
+<code>ptr</code> is the reverse DNS from the dataset above, looked up when the address
+is first listed and again whenever the list service restarts.
+<code>verified</code> is <code>true</code> when that hostname belongs to the operator the
+User-Agent names, <code>false</code> when it does not (someone borrowing the name), and
+<code>null</code> when it cannot be checked.</p>
+
+<h2>Shared rules for both lists</h2>
+<ul>
+<li>Times are Unix timestamps rounded down to the start of the day (UTC).</li>
+<li>IPv6 clients are listed as their /64 network.</li>
+<li>Entries are never removed.</li>
+<li>The lists are rebuilt every five minutes and uploaded hourly to the
+<a href="https://github.com/tn3w/opendata/releases/tag/data">GitHub release</a>
+(<code>abuse.txt</code>, <code>abuse.json</code>, <code>crawlers.txt</code>,
+<code>crawlers.json</code>).</li>
+</ul>
+
+<h2 id="license">License</h2>
+<p>All three datasets (reverse DNS, abuse IP list, crawler IP list) are dedicated to the
+public domain under <a href="https://creativecommons.org/publicdomain/zero/1.0/">CC0
+1.0 Universal</a>. Copy, change, redistribute and use them commercially without asking
+and without attribution. They come with no warranty of any kind.</p>
+
+<h2>Privacy</h2>
+<p>The web server keeps no access log on disk. Requests are classified in memory, and
+only the entries published above are ever written down. A visitor with an ordinary
+browser who attacks nothing leaves nothing behind.</p>
+<ul>
+<li>Requests that a web page caused in a visitor's browser (anything a browser marks as
+coming from another site) are ignored for the abuse list, so nobody can be put on it by
+being sent a link.</li>
+</ul>
+</body>
+</html>
