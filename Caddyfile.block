@@ -19,6 +19,7 @@ https://data.tn3w.dev {
 	import access_feed
 	header {
 		-Server
+		-Via
 		Access-Control-Allow-Origin *
 		X-Content-Type-Options nosniff
 		?Cache-Control "public, max-age=300"
