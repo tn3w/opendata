@@ -20,6 +20,13 @@ const PUBLISH_INTERVAL: Duration = Duration::from_secs(300);
 const MAX_USER_AGENTS: usize = 8;
 const MAX_USER_AGENT_LENGTH: usize = 256;
 const OWN_CLIENTS: &[&str] = &["Shelf ("];
+const FETCHER_TAGS: &[&str] = &[
+    "social-preview",
+    "feed-reader",
+    "ai-fetcher",
+    "archiver",
+    "monitoring",
+];
 
 type Table = BTreeMap<String, Vec<String>>;
 
@@ -171,6 +178,11 @@ fn network(address: IpAddr) -> Option<String> {
     }
 }
 
+fn is_fetcher(agent: &str) -> bool {
+    let tags = crawler_info(agent).map_or(&[][..], |info| &info.tags);
+    tags.iter().any(|tag| FETCHER_TAGS.contains(&tag.as_str()))
+}
+
 fn decode(query: &str) -> String {
     let mut bytes = Vec::with_capacity(query.len());
     let mut rest = query.as_bytes();
@@ -237,7 +249,7 @@ impl State {
 
         let is_scripted = matches!(header("Sec-Fetch-Site"), "" | "none");
         let categories = self.rules.categories(request, agent);
-        if is_scripted && !categories.is_empty() {
+        if is_scripted && !is_fetcher(agent) && !categories.is_empty() {
             self.list_abuser(network.clone(), categories, today);
         }
 
@@ -422,6 +434,18 @@ mod tests {
         assert_eq!(kinds(&state, "203.0.113.6"), ["php", "wordpress"]);
         assert_eq!(kinds(&state, "203.0.113.7"), ["injection"]);
         assert_eq!(kinds(&state, "203.0.113.8"), ["scanner"]);
+    }
+
+    #[test]
+    fn fetchers_sent_a_link_are_crawlers_not_attackers() {
+        let mut state = state();
+        let proxy = [("User-Agent", "Mozilla/5.0 (via ggpht.com GoogleImageProxy)")];
+        let slack = [("User-Agent", "Slackbot-LinkExpanding 1.0")];
+        state.observe(&request("203.0.113.5", "/wp-login.php", &proxy), DAY);
+        state.observe(&request("203.0.113.6", "/.env", &slack), DAY);
+
+        assert!(state.abusers.is_empty());
+        assert_eq!(listed(&state.crawlers), ["203.0.113.5", "203.0.113.6"]);
     }
 
     #[test]

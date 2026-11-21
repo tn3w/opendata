@@ -98,6 +98,9 @@ browser who attacks nothing leaves nothing behind.</p>
 <li>Requests that a web page caused in a visitor's browser (anything a browser marks as
 coming from another site) are ignored for the abuse list, so nobody can be put on it by
 being sent a link.</li>
+<li>The same holds for clients that fetch links others hand them (link previews, image
+proxies, feed readers, archivers, uptime monitors): they appear on the crawler list,
+never on the abuse list.</li>
 </ul>
 </body>
 </html>
