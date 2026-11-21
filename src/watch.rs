@@ -1,15 +1,15 @@
-use crate::public;
+use crate::{credential, public};
 use iscrawl::{crawler_info, is_crawler};
 use listenfd::ListenFd;
 use rdns::scan;
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use std::{
     collections::{BTreeMap, BTreeSet, HashMap, HashSet},
-    env, fs,
+    fs,
     io::{BufRead, BufReader},
     net::{IpAddr, Ipv6Addr},
-    os::unix::net::UnixStream,
-    path::{Path, PathBuf},
+    os::unix::net::{UnixListener, UnixStream},
+    path::Path,
     sync::{Arc, Mutex},
     thread,
     time::{Duration, Instant, SystemTime, UNIX_EPOCH},
@@ -33,7 +33,14 @@ struct Rules {
 
 #[derive(Deserialize)]
 struct Entry {
-    request: Request,
+    request: Option<Request>,
+    report: Option<Report>,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct Report {
+    pub client_ip: IpAddr,
+    pub categories: BTreeSet<String>,
 }
 
 #[derive(Deserialize)]
@@ -75,17 +82,11 @@ struct State {
 }
 
 pub fn run() {
-    let listener = ListenFd::from_env()
-        .take_unix_listener(0)
-        .ok()
-        .flatten()
-        .expect("systemd passes a unix socket");
-    let credentials =
-        PathBuf::from(env::var("CREDENTIALS_DIRECTORY").unwrap_or_default());
-    let credential = |name: &str| {
-        fs::read_to_string(credentials.join(name))
-            .unwrap_or_else(|error| panic!("{name} credential: {error}"))
-    };
+    let mut descriptors = ListenFd::from_env();
+    let listeners: Vec<UnixListener> = (0..descriptors.len())
+        .map(|index| descriptors.take_unix_listener(index).ok().flatten())
+        .map(|listener| listener.expect("systemd passes unix sockets"))
+        .collect();
     let mut crawlers: BTreeMap<String, Crawler> =
         load(&public("crawlers").join("ips.json"));
     for (network, crawler) in &mut crawlers {
@@ -99,6 +100,19 @@ pub fn run() {
         ..State::default()
     }));
 
+    let accepting: Vec<_> = listeners
+        .into_iter()
+        .map(|listener| {
+            let state = state.clone();
+            thread::spawn(move || accept(listener, &state))
+        })
+        .collect();
+    for thread in accepting {
+        thread.join().unwrap();
+    }
+}
+
+fn accept(listener: UnixListener, state: &Arc<Mutex<State>>) {
     for stream in listener.incoming().flatten() {
         let state = state.clone();
         thread::spawn(move || follow(stream, &state));
@@ -107,15 +121,22 @@ pub fn run() {
 
 fn follow(stream: UnixStream, state: &Mutex<State>) {
     for line in BufReader::new(stream).lines().map_while(Result::ok) {
-        if let Ok(entry) = serde_json::from_str::<Entry>(&line) {
-            let mut state = state.lock().unwrap();
-            let is_checked = state.observe(&entry.request, today());
-            let is_due = state
-                .published
-                .is_none_or(|published| published.elapsed() >= PUBLISH_INTERVAL);
-            if is_checked && is_due {
-                state.publish();
-            }
+        let Ok(entry) = serde_json::from_str::<Entry>(&line) else {
+            continue;
+        };
+        let mut state = state.lock().unwrap();
+        if let Some(report) = entry.report {
+            state.reported(report, today());
+        }
+        let Some(request) = entry.request else {
+            continue;
+        };
+        let is_checked = state.observe(&request, today());
+        let is_due = state
+            .published
+            .is_none_or(|published| published.elapsed() >= PUBLISH_INTERVAL);
+        if is_checked && is_due {
+            state.publish();
         }
     }
 }
@@ -217,13 +238,7 @@ impl State {
         let is_scripted = matches!(header("Sec-Fetch-Site"), "" | "none");
         let categories = self.rules.categories(request, agent);
         if is_scripted && !categories.is_empty() {
-            let abuser = self.abusers.entry(network.clone()).or_default();
-            if abuser.requests == 0 {
-                abuser.first_seen = today;
-            }
-            abuser.last_seen = today;
-            abuser.requests += 1;
-            abuser.categories.extend(categories);
+            self.list_abuser(network.clone(), categories, today);
         }
 
         let is_own_client = OWN_CLIENTS.iter().any(|client| agent.starts_with(client));
@@ -237,6 +252,25 @@ impl State {
             crawler.verify(request.client_ip, agent);
         }
         false
+    }
+
+    fn reported(&mut self, report: Report, today: u64) {
+        let Some(network) = network(report.client_ip) else {
+            return;
+        };
+        if !self.own_networks.contains(&network) {
+            self.list_abuser(network, report.categories, today);
+        }
+    }
+
+    fn list_abuser(&mut self, network: String, categories: BTreeSet<String>, today: u64) {
+        let abuser = self.abusers.entry(network).or_default();
+        if abuser.requests == 0 {
+            abuser.first_seen = today;
+        }
+        abuser.last_seen = today;
+        abuser.requests += 1;
+        abuser.categories.extend(categories);
     }
 
     fn publish(&mut self) {
@@ -433,5 +467,32 @@ mod tests {
 
         assert_eq!(listed(&state.crawlers), ["203.0.113.6"]);
         assert!(state.abusers.is_empty());
+    }
+
+    #[test]
+    fn reports_are_listed_except_own_and_private_addresses() {
+        let mut state = State {
+            beacon: "secret".into(),
+            ..State::default()
+        };
+        state.observe(
+            &request("203.0.113.5", "/", &[("User-Agent", "secret")]),
+            DAY,
+        );
+        let report = |address: &str, categories: &[&str]| Report {
+            client_ip: address.parse().unwrap(),
+            categories: categories
+                .iter()
+                .map(|category| category.to_string())
+                .collect(),
+        };
+        state.reported(report("::ffff:198.51.100.4", &["a"]), DAY);
+        state.reported(report("198.51.100.4", &["a", "b"]), DAY);
+        state.reported(report("203.0.113.5", &["a"]), DAY);
+        state.reported(report("10.0.0.3", &["a"]), DAY);
+
+        assert_eq!(listed(&state.abusers), ["198.51.100.4"]);
+        assert_eq!(kinds(&state, "198.51.100.4"), ["a", "b"]);
+        assert_eq!(state.abusers["198.51.100.4"].requests, 2);
     }
 }
